@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -25,24 +26,52 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					DEFAULT: 'hsl(220, 100%, 50%)',
+					foreground: 'hsl(0, 0%, 100%)',
+					50: 'hsl(220, 100%, 97%)',
+					100: 'hsl(220, 100%, 93%)',
+					200: 'hsl(220, 100%, 85%)',
+					300: 'hsl(220, 100%, 75%)',
+					400: 'hsl(220, 100%, 65%)',
+					500: 'hsl(220, 100%, 50%)',
+					600: 'hsl(220, 100%, 45%)',
+					700: 'hsl(220, 100%, 40%)',
+					800: 'hsl(220, 100%, 35%)',
+					900: 'hsl(220, 100%, 25%)',
 				},
 				secondary: {
-					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
+					DEFAULT: 'hsl(210, 40%, 96.1%)',
+					foreground: 'hsl(222.2, 47.4%, 11.2%)'
 				},
-				destructive: {
-					DEFAULT: 'hsl(var(--destructive))',
-					foreground: 'hsl(var(--destructive-foreground))'
+				success: {
+					DEFAULT: 'hsl(142, 76%, 36%)',
+					foreground: 'hsl(0, 0%, 100%)',
+					50: 'hsl(142, 76%, 97%)',
+					100: 'hsl(142, 76%, 93%)',
+					200: 'hsl(142, 76%, 85%)',
+					300: 'hsl(142, 76%, 75%)',
+					400: 'hsl(142, 76%, 55%)',
+					500: 'hsl(142, 76%, 36%)',
+					600: 'hsl(142, 76%, 31%)',
+					700: 'hsl(142, 76%, 26%)',
+					800: 'hsl(142, 76%, 21%)',
+					900: 'hsl(142, 76%, 16%)',
+				},
+				warning: {
+					DEFAULT: 'hsl(45, 93%, 47%)',
+					foreground: 'hsl(0, 0%, 100%)',
 				},
 				muted: {
-					DEFAULT: 'hsl(var(--muted))',
-					foreground: 'hsl(var(--muted-foreground))'
+					DEFAULT: 'hsl(210, 40%, 96.1%)',
+					foreground: 'hsl(215.4, 16.3%, 46.9%)'
 				},
 				accent: {
-					DEFAULT: 'hsl(var(--accent))',
-					foreground: 'hsl(var(--accent-foreground))'
+					DEFAULT: 'hsl(210, 40%, 96.1%)',
+					foreground: 'hsl(222.2, 47.4%, 11.2%)'
+				},
+				destructive: {
+					DEFAULT: 'hsl(0, 84.2%, 60.2%)',
+					foreground: 'hsl(210, 40%, 98%)'
 				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',
@@ -84,11 +113,26 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': { opacity: '0', transform: 'translateY(10px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
+				},
+				'slide-in-right': {
+					'0%': { opacity: '0', transform: 'translateX(20px)' },
+					'100%': { opacity: '1', transform: 'translateX(0)' }
+				},
+				'pulse-glow': {
+					'0%, 100%': { boxShadow: '0 0 5px rgba(59, 130, 246, 0.5)' },
+					'50%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.8)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.5s ease-out',
+				'slide-in-right': 'slide-in-right 0.3s ease-out',
+				'pulse-glow': 'pulse-glow 2s ease-in-out infinite'
 			}
 		}
 	},
