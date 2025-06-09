@@ -1,14 +1,14 @@
-
 import React, { useState } from 'react';
 import { Shield, FileCheck, Users, Lock, CheckCircle, FileText, Search } from 'lucide-react';
 import AuthForm from '../components/AuthForm';
 import Dashboard from '../components/Dashboard';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Index = () => {
-  const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
+  const { userData, logout } = useAuth();
 
   const features = [
     {
@@ -40,12 +40,12 @@ const Index = () => {
     { number: "24/7", label: "Verification Service", icon: <Search className="h-6 w-6" /> }
   ];
 
-  if (user) {
-    return <Dashboard user={user} onLogout={() => setUser(null)} />;
+  if (userData) {
+    return <Dashboard user={userData} onLogout={logout} />;
   }
 
   if (showAuth) {
-    return <AuthForm onAuthSuccess={setUser} onBack={() => setShowAuth(false)} />;
+    return <AuthForm onBack={() => setShowAuth(false)} />;
   }
 
   return (

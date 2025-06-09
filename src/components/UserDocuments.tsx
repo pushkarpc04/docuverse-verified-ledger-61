@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface UserDocumentsProps {
   user: any;
@@ -12,12 +14,33 @@ interface UserDocumentsProps {
 
 const UserDocuments: React.FC<UserDocumentsProps> = ({ user }) => {
   const [documents, setDocuments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load user's documents from localStorage
-    const allDocuments = JSON.parse(localStorage.getItem('documents') || '[]');
-    const userDocuments = allDocuments.filter((doc: any) => doc.uploadedBy === user.id);
-    setDocuments(userDocuments);
+    const fetchUserDocuments = async () => {
+      try {
+        const documentsRef = collection(db, 'documents');
+        const q = query(
+          documentsRef, 
+          where('uploadedBy', '==', user.id),
+          orderBy('uploadedAt', 'desc')
+        );
+        
+        const querySnapshot = await getDocs(q);
+        const userDocuments = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        setDocuments(userDocuments);
+      } catch (error) {
+        console.error('Error fetching documents:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserDocuments();
   }, [user.id]);
 
   const getStatusIcon = (status: string) => {
@@ -45,6 +68,31 @@ const UserDocuments: React.FC<UserDocumentsProps> = ({ user }) => {
         return <Badge variant="outline">Unknown</Badge>;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <FileText className="h-5 w-5 text-primary-500" />
+              <span>My Documents</span>
+            </CardTitle>
+            <CardDescription>Loading your documents...</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-24 bg-gray-200 rounded-lg"></div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (documents.length === 0) {
     return (
@@ -95,7 +143,7 @@ const UserDocuments: React.FC<UserDocumentsProps> = ({ user }) => {
         <CardContent>
           <div className="space-y-4">
             {documents.map((document, index) => (
-              <Card key={index} className="border border-gray-200 hover:shadow-md transition-shadow">
+              <Card key={document.id || index} className="border border-gray-200 hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-4 flex-1">

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, Shield, User, Building, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,13 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AuthFormProps {
-  onAuthSuccess: (user: any) => void;
   onBack: () => void;
 }
 
-const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onBack }) => {
+const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -26,6 +25,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onBack }) => {
     lastName: ''
   });
   const { toast } = useToast();
+  const { signup, login } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -42,41 +42,50 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onBack }) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate authentication delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
     try {
-      // Mock authentication logic
       if (!formData.email || !formData.password) {
         throw new Error('Please fill in all required fields');
       }
 
-      if (mode === 'signup' && formData.password !== formData.confirmPassword) {
-        throw new Error('Passwords do not match');
+      if (mode === 'signup') {
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error('Passwords do not match');
+        }
+
+        if (!formData.firstName || !formData.lastName) {
+          throw new Error('Please provide your first and last name');
+        }
+
+        if (formData.role === 'institute' && !formData.instituteName) {
+          throw new Error('Please provide your institution name');
+        }
+
+        await signup(formData.email, formData.password, {
+          email: formData.email,
+          role: formData.role,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          instituteName: formData.instituteName || undefined,
+          verified: true
+        });
+
+        toast({
+          title: "Account Created Successfully!",
+          description: `Welcome ${formData.firstName}! Your account has been created.`,
+        });
+      } else {
+        await login(formData.email, formData.password);
+        
+        toast({
+          title: "Sign In Successful!",
+          description: "Welcome back! You've been signed in successfully.",
+        });
       }
-
-      // Create mock user object
-      const user = {
-        id: Date.now().toString(),
-        email: formData.email,
-        role: formData.role,
-        firstName: formData.firstName || 'John',
-        lastName: formData.lastName || 'Doe',
-        instituteName: formData.instituteName || null,
-        createdAt: new Date().toISOString(),
-        verified: true
-      };
-
-      toast({
-        title: "Authentication Successful!",
-        description: `Welcome ${user.firstName}! You've been signed in successfully.`,
-      });
-
-      onAuthSuccess(user);
     } catch (error: any) {
+      console.error('Authentication error:', error);
       toast({
         title: "Authentication Error",
-        description: error.message,
+        description: error.message || "An error occurred during authentication",
         variant: "destructive",
       });
     } finally {
