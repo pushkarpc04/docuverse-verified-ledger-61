@@ -58,12 +58,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       console.log('Display name updated');
 
-      // Create user document in Firestore
+      // Create user document in Firestore - only include instituteName if it exists
       const newUserData: UserData = {
         id: user.uid,
         email: user.email!,
         createdAt: new Date().toISOString(),
-        ...userInfo
+        role: userInfo.role,
+        firstName: userInfo.firstName,
+        lastName: userInfo.lastName,
+        verified: userInfo.verified,
+        ...(userInfo.instituteName && { instituteName: userInfo.instituteName })
       };
 
       console.log('Attempting to save user data to Firestore:', newUserData);
@@ -115,12 +119,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('User data fetched successfully:', userData);
             setUserData(userData);
           } else {
-            console.log('No user document found in Firestore');
+            console.log('No user document found in Firestore, creating minimal user data');
+            // If no document exists, create minimal user data from auth user
+            const minimalUserData: UserData = {
+              id: user.uid,
+              email: user.email || '',
+              role: 'user',
+              firstName: user.displayName?.split(' ')[0] || 'User',
+              lastName: user.displayName?.split(' ')[1] || '',
+              verified: true,
+              createdAt: new Date().toISOString()
+            };
+            setUserData(minimalUserData);
+          }
+        } catch (error: any) {
+          console.error('Error fetching user data from Firestore:', error);
+          
+          // If it's a permission error, create minimal user data from auth user
+          if (error.code === 'permission-denied') {
+            console.log('Permission denied, using auth user data only');
+            const minimalUserData: UserData = {
+              id: user.uid,
+              email: user.email || '',
+              role: 'user',
+              firstName: user.displayName?.split(' ')[0] || 'User',
+              lastName: user.displayName?.split(' ')[1] || '',
+              verified: true,
+              createdAt: new Date().toISOString()
+            };
+            setUserData(minimalUserData);
+          } else {
             setUserData(null);
           }
-        } catch (error) {
-          console.error('Error fetching user data from Firestore:', error);
-          setUserData(null);
         }
       } else {
         setUserData(null);

@@ -91,14 +91,21 @@ const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
           instituteName: formData.instituteName || undefined,
         });
 
-        await signup(formData.email, formData.password, {
+        // Create user data object without undefined values
+        const userDataForSignup: Omit<any, 'id' | 'createdAt'> = {
           email: formData.email,
           role: formData.role,
           firstName: formData.firstName,
           lastName: formData.lastName,
-          instituteName: formData.instituteName || undefined,
           verified: true
-        });
+        };
+
+        // Only add instituteName if it has a value
+        if (formData.role === 'institute' && formData.instituteName.trim()) {
+          userDataForSignup.instituteName = formData.instituteName.trim();
+        }
+
+        await signup(formData.email, formData.password, userDataForSignup);
 
         toast({
           title: "Account Created Successfully!",
