@@ -1,12 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, Eye, Hash, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 interface UserDocumentsProps {
   user: any;
@@ -19,18 +16,14 @@ const UserDocuments: React.FC<UserDocumentsProps> = ({ user }) => {
   useEffect(() => {
     const fetchUserDocuments = async () => {
       try {
-        const documentsRef = collection(db, 'documents');
-        const q = query(
-          documentsRef, 
-          where('uploadedBy', '==', user.id),
-          orderBy('uploadedAt', 'desc')
-        );
+        console.log('Fetching documents from localStorage for user:', user.id);
+        // Get documents from localStorage instead of Firestore
+        const storedDocuments = JSON.parse(localStorage.getItem('documents') || '[]');
+        console.log('All stored documents:', storedDocuments);
         
-        const querySnapshot = await getDocs(q);
-        const userDocuments = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        // Filter documents for current user
+        const userDocuments = storedDocuments.filter((doc: any) => doc.uploadedBy === user.id);
+        console.log('User documents:', userDocuments);
         
         setDocuments(userDocuments);
       } catch (error) {
@@ -40,7 +33,9 @@ const UserDocuments: React.FC<UserDocumentsProps> = ({ user }) => {
       }
     };
 
-    fetchUserDocuments();
+    if (user?.id) {
+      fetchUserDocuments();
+    }
   }, [user.id]);
 
   const getStatusIcon = (status: string) => {

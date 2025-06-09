@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { FileText, CheckCircle, XCircle, Clock, MessageSquare, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,10 +17,12 @@ const InstituteDocuments: React.FC<InstituteDocumentsProps> = ({ user }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load all documents for institute review
+    console.log('Loading documents for institute review, user:', user);
+    // Load all documents for institute review from localStorage
     const allDocuments = JSON.parse(localStorage.getItem('documents') || '[]');
+    console.log('All documents loaded:', allDocuments);
     setDocuments(allDocuments);
-  }, []);
+  }, [user]);
 
   const handleDocumentAction = (documentId: string, action: 'approve' | 'reject') => {
     const comment = reviewComments[documentId] || '';
@@ -34,7 +35,7 @@ const InstituteDocuments: React.FC<InstituteDocumentsProps> = ({ user }) => {
           reviewedBy: user.id,
           reviewedAt: new Date().toISOString(),
           reviewComment: comment,
-          instituteName: user.instituteName
+          instituteName: user.instituteName || user.firstName + ' ' + user.lastName
         };
       }
       return doc;
