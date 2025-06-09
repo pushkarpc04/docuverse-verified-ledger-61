@@ -48,7 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signup = async (email: string, password: string, userInfo: Omit<UserData, 'id' | 'createdAt'>) => {
     try {
-      console.log('Starting signup process for:', email);
+      console.log('Starting signup process for:', email, 'Role:', userInfo.role);
       const { user } = await createUserWithEmailAndPassword(auth, email, password);
       console.log('User created successfully:', user.uid);
       
@@ -58,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       console.log('Display name updated');
 
-      // Create user document in Firestore - only include instituteName if it exists
+      // Create user document - store in localStorage as backup
       const newUserData: UserData = {
         id: user.uid,
         email: user.email!,
@@ -70,9 +70,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...(userInfo.instituteName && { instituteName: userInfo.instituteName })
       };
 
-      console.log('Attempting to save user data to Firestore:', newUserData);
-      await setDoc(doc(db, 'users', user.uid), newUserData);
-      console.log('User data saved to Firestore successfully');
+      console.log('Attempting to save user data:', newUserData);
+      
+      // Store in localStorage as primary storage
+      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+      const updatedUsers = [...existingUsers.filter((u: any) => u.id !== user.uid), newUserData];
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+      console.log('User data saved to localStorage successfully');
+
+      // Try to save to Firestore as well (optional)
+      try {
+        await setDoc(doc(db, 'users', user.uid), newUserData);
+        console.log('User data also saved to Firestore');
+      } catch (firestoreError) {
+        console.log('Firestore save failed, but localStorage backup succeeded:', firestoreError);
+      }
+
       setUserData(newUserData);
     } catch (error) {
       console.error('Signup error:', error);
@@ -111,46 +124,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (user) {
         try {
-          console.log('Fetching user data from Firestore for:', user.uid);
-          // Fetch user data from Firestore
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data() as UserData;
-            console.log('User data fetched successfully:', userData);
-            setUserData(userData);
-          } else {
-            console.log('No user document found in Firestore, creating minimal user data');
-            // If no document exists, create minimal user data from auth user
-            const minimalUserData: UserData = {
-              id: user.uid,
-              email: user.email || '',
-              role: 'user',
-              firstName: user.displayName?.split(' ')[0] || 'User',
-              lastName: user.displayName?.split(' ')[1] || '',
-              verified: true,
-              createdAt: new Date().toISOString()
-            };
-            setUserData(minimalUserData);
-          }
-        } catch (error: any) {
-          console.error('Error fetching user data from Firestore:', error);
+          console.log('Fetching user data for:', user.uid);
           
-          // If it's a permission error, create minimal user data from auth user
-          if (error.code === 'permission-denied') {
-            console.log('Permission denied, using auth user data only');
-            const minimalUserData: UserData = {
-              id: user.uid,
-              email: user.email || '',
-              role: 'user',
-              firstName: user.displayName?.split(' ')[0] || 'User',
-              lastName: user.displayName?.split(' ')[1] || '',
-              verified: true,
-              createdAt: new Date().toISOString()
-            };
-            setUserData(minimalUserData);
+          // First try localStorage
+          const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+          const localUserData = storedUsers.find((u: any) => u.id === user.uid);
+          
+          if (localUserData) {
+            console.log('User data found in localStorage:', localUserData);
+            setUserData(localUserData);
           } else {
-            setUserData(null);
+            // Try Firestore as fallback
+            try {
+              console.log('Trying Firestore for user data');
+              const userDoc = await getDoc(doc(db, 'users', user.uid));
+              if (userDoc.exists()) {
+                const userData = userDoc.data() as UserData;
+                console.log('User data fetched from Firestore:', userData);
+                setUserData(userData);
+                
+                // Store in localStorage for future use
+                const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+                const updatedUsers = [...existingUsers.filter((u: any) => u.id !== user.uid), userData];
+                localStorage.setItem('users', JSON.stringify(updatedUsers));
+              } else {
+                console.log('No user document found, creating minimal user data');
+                // Create minimal user data from auth user
+                const minimalUserData: UserData = {
+                  id: user.uid,
+                  email: user.email || '',
+                  role: 'user',
+                  firstName: user.displayName?.split(' ')[0] || 'User',
+                  lastName: user.displayName?.split(' ')[1] || '',
+                  verified: true,
+                  createdAt: new Date().toISOString()
+                };
+                setUserData(minimalUserData);
+                
+                // Store in localStorage
+                const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+                const updatedUsers = [...existingUsers.filter((u: any) => u.id !== user.uid), minimalUserData];
+                localStorage.setItem('users', JSON.stringify(updatedUsers));
+              }
+            } catch (firestoreError: any) {
+              console.error('Error fetching from Firestore:', firestoreError);
+              
+              // Create minimal user data from auth user
+              const minimalUserData: UserData = {
+                id: user.uid,
+                email: user.email || '',
+                role: 'user',
+                firstName: user.displayName?.split(' ')[0] || 'User',
+                lastName: user.displayName?.split(' ')[1] || '',
+                verified: true,
+                createdAt: new Date().toISOString()
+              };
+              setUserData(minimalUserData);
+              
+              // Store in localStorage
+              const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+              const updatedUsers = [...existingUsers.filter((u: any) => u.id !== user.uid), minimalUserData];
+              localStorage.setItem('users', JSON.stringify(updatedUsers));
+            }
           }
+        } catch (error) {
+          console.error('Error in auth state change handler:', error);
+          setUserData(null);
         }
       } else {
         setUserData(null);

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, Eye, Hash, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,13 +18,19 @@ const UserDocuments: React.FC<UserDocumentsProps> = ({ user }) => {
     const fetchUserDocuments = async () => {
       try {
         console.log('Fetching documents from localStorage for user:', user.id);
+        console.log('User object:', user);
+        
         // Get documents from localStorage instead of Firestore
         const storedDocuments = JSON.parse(localStorage.getItem('documents') || '[]');
         console.log('All stored documents:', storedDocuments);
+        console.log('Looking for documents with uploadedBy:', user.id);
         
         // Filter documents for current user
-        const userDocuments = storedDocuments.filter((doc: any) => doc.uploadedBy === user.id);
-        console.log('User documents:', userDocuments);
+        const userDocuments = storedDocuments.filter((doc: any) => {
+          console.log(`Comparing doc.uploadedBy (${doc.uploadedBy}) with user.id (${user.id})`);
+          return doc.uploadedBy === user.id;
+        });
+        console.log('User documents found:', userDocuments);
         
         setDocuments(userDocuments);
       } catch (error) {
@@ -113,6 +120,13 @@ const UserDocuments: React.FC<UserDocumentsProps> = ({ user }) => {
               <p className="text-gray-600 mb-6">
                 You haven't uploaded any documents yet. Start by uploading your first document to secure it on the blockchain.
               </p>
+              <div className="bg-gray-100 p-4 rounded-lg mb-6">
+                <p className="text-xs text-gray-700 mb-2">Debug Info:</p>
+                <p className="text-xs text-gray-600">User ID: {user?.id}</p>
+                <p className="text-xs text-gray-600">
+                  Documents in storage: {JSON.parse(localStorage.getItem('documents') || '[]').length}
+                </p>
+              </div>
               <Button className="bg-gradient-to-r from-primary-500 to-success-500 hover:from-primary-600 hover:to-success-600">
                 Upload Your First Document
               </Button>

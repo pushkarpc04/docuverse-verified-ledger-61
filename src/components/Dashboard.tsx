@@ -19,6 +19,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  console.log('Dashboard user data:', user);
+  console.log('User role:', user?.role);
+
   const userTabs = [
     { id: 'overview', label: 'Overview', icon: <FileText className="h-4 w-4" /> },
     { id: 'upload', label: 'Upload Document', icon: <Upload className="h-4 w-4" /> },
@@ -34,9 +37,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     { id: 'blockchain', label: 'Blockchain Ledger', icon: <Shield className="h-4 w-4" /> },
   ];
 
-  const tabs = user.role === 'institute' ? instituteTabs : userTabs;
+  // Determine which tabs to show based on user role
+  const tabs = user?.role === 'institute' ? instituteTabs : userTabs;
+  console.log('Selected tabs for role', user?.role, ':', tabs.map(t => t.id));
 
   const renderContent = () => {
+    console.log('Rendering content for activeTab:', activeTab, 'userRole:', user?.role);
     switch (activeTab) {
       case 'overview':
         return <DashboardOverview user={user} />;
@@ -66,7 +72,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             </div>
             <div>
               <h1 className="text-lg font-bold text-gray-900">DocVerify</h1>
-              <p className="text-xs text-gray-600">Dashboard</p>
+              <p className="text-xs text-gray-600">
+                {user?.role === 'institute' ? 'Institute Portal' : 'User Dashboard'}
+              </p>
             </div>
           </div>
           <Button
@@ -82,25 +90,25 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         <div className="p-6 border-b">
           <div className="flex items-center space-x-3">
             <div className="bg-primary-100 p-2 rounded-lg">
-              {user.role === 'institute' ? (
+              {user?.role === 'institute' ? (
                 <Building className="h-5 w-5 text-primary-600" />
               ) : (
                 <User className="h-5 w-5 text-primary-600" />
               )}
             </div>
             <div>
-              <p className="font-medium text-gray-900">{user.firstName} {user.lastName}</p>
+              <p className="font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
               <div className="flex items-center space-x-2">
-                <Badge variant={user.role === 'institute' ? 'default' : 'secondary'} className="text-xs">
-                  {user.role === 'institute' ? 'Institution' : 'User'}
+                <Badge variant={user?.role === 'institute' ? 'default' : 'secondary'} className="text-xs">
+                  {user?.role === 'institute' ? 'Institution' : 'User'}
                 </Badge>
-                {user.verified && (
+                {user?.verified && (
                   <CheckCircle className="h-3 w-3 text-success-500" />
                 )}
               </div>
             </div>
           </div>
-          {user.instituteName && (
+          {user?.instituteName && (
             <p className="text-sm text-gray-600 mt-2">{user.instituteName}</p>
           )}
         </div>
@@ -113,6 +121,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   variant={activeTab === tab.id ? 'default' : 'ghost'}
                   className={`w-full justify-start ${activeTab === tab.id ? 'bg-gradient-to-r from-primary-500 to-success-500 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
                   onClick={() => {
+                    console.log('Tab clicked:', tab.id);
                     setActiveTab(tab.id);
                     setSidebarOpen(false);
                   }}
@@ -156,7 +165,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   {activeTab === 'pending' ? 'Pending Reviews' : activeTab}
                 </h1>
                 <p className="text-sm text-gray-600">
-                  {activeTab === 'overview' && 'Dashboard overview and statistics'}
+                  {activeTab === 'overview' && `${user?.role === 'institute' ? 'Institute' : 'User'} dashboard overview and statistics`}
                   {activeTab === 'upload' && 'Upload and secure your documents'}
                   {activeTab === 'verify' && 'Verify document authenticity'}
                   {activeTab === 'documents' && 'Manage your uploaded documents'}
@@ -167,7 +176,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             </div>
             <div className="flex items-center space-x-3">
               <Badge variant="outline" className="hidden sm:flex">
-                {user.role === 'institute' ? 'Institution Access' : 'User Access'}
+                {user?.role === 'institute' ? 'Institution Access' : 'User Access'}
               </Badge>
             </div>
           </div>
