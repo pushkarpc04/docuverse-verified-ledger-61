@@ -38,11 +38,34 @@ const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
     setFormData(prev => ({ ...prev, role }));
   };
 
+  const getFirebaseErrorMessage = (errorCode: string) => {
+    switch (errorCode) {
+      case 'auth/user-not-found':
+        return 'No account found with this email address.';
+      case 'auth/wrong-password':
+        return 'Incorrect password. Please try again.';
+      case 'auth/email-already-in-use':
+        return 'An account with this email already exists.';
+      case 'auth/weak-password':
+        return 'Password should be at least 6 characters long.';
+      case 'auth/invalid-email':
+        return 'Please enter a valid email address.';
+      case 'auth/too-many-requests':
+        return 'Too many failed attempts. Please try again later.';
+      case 'permission-denied':
+        return 'Database access denied. Please contact support.';
+      default:
+        return 'An unexpected error occurred. Please try again.';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent, mode: 'signin' | 'signup') => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      console.log(`Starting ${mode} process`);
+      
       if (!formData.email || !formData.password) {
         throw new Error('Please fill in all required fields');
       }
@@ -60,6 +83,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
           throw new Error('Please provide your institution name');
         }
 
+        console.log('Calling signup with data:', {
+          email: formData.email,
+          role: formData.role,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          instituteName: formData.instituteName || undefined,
+        });
+
         await signup(formData.email, formData.password, {
           email: formData.email,
           role: formData.role,
@@ -74,6 +105,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
           description: `Welcome ${formData.firstName}! Your account has been created.`,
         });
       } else {
+        console.log('Calling login with email:', formData.email);
         await login(formData.email, formData.password);
         
         toast({
@@ -83,9 +115,18 @@ const AuthForm: React.FC<AuthFormProps> = ({ onBack }) => {
       }
     } catch (error: any) {
       console.error('Authentication error:', error);
+      
+      let errorMessage = 'An error occurred during authentication';
+      
+      if (error.code) {
+        errorMessage = getFirebaseErrorMessage(error.code);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Authentication Error",
-        description: error.message || "An error occurred during authentication",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
